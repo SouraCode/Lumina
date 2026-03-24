@@ -33,7 +33,19 @@ export const getFeed = async (req, res) => {
     try {
         const user = await User.findById(req.user._id);
         const friends = user.friends;
-        const posts = await Post.find({ user: { $in: [...friends, req.user._id] } })
+        
+        const visibleUsers = await User.find({
+            $or: [
+                { isPrivate: false },
+                { isPrivate: { $exists: false } },
+                { _id: { $in: friends } },
+                { _id: req.user._id }
+            ]
+        }).select('_id');
+        
+        const visibleUserIds = visibleUsers.map(u => u._id);
+
+        const posts = await Post.find({ user: { $in: visibleUserIds } })
             .populate('user', 'name avatar')
             .populate('comments.user', 'name avatar')
             .sort({ createdAt: -1 });

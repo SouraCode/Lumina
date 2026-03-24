@@ -132,7 +132,7 @@ const Chat = () => {
                     return (
                         <div key={i} className={`flex ${isMe ? 'justify-end' : 'justify-start'} group max-w-full`}>
                             {isMe && m._id && (
-                                <button onClick={() => handleDeleteMessage(m._id)} title="Delete message" className="mr-3 opacity-0 group-hover:opacity-100 text-neutral-500 hover:text-red-500 transition-all self-center">
+                                <button onClick={() => handleDeleteMessage(m._id)} title="Delete message" className="mr-3 opacity-100 md:opacity-0 md:group-hover:opacity-100 text-neutral-500 hover:text-red-500 transition-all self-center">
                                     <Trash2 size={16} />
                                 </button>
                             )}

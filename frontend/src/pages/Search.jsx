@@ -28,15 +28,25 @@ const Search = () => {
         fetchFriendsData();
     }, []);
 
+    useEffect(() => {
+        const delayDebounceFn = setTimeout(async () => {
+            if (keyword) {
+                try {
+                    const { data } = await api.get(`/users/search?keyword=${keyword}`);
+                    setResults(data);
+                } catch(err) {
+                    toast.error("Failed to search users");
+                }
+            } else {
+                setResults([]);
+            }
+        }, 300);
+        return () => clearTimeout(delayDebounceFn);
+    }, [keyword]);
+
     const searchUsers = async (e) => {
         e.preventDefault();
-        if(!keyword) return;
-        try {
-            const { data } = await api.get(`/users/search?keyword=${keyword}`);
-            setResults(data);
-        } catch(err) {
-            toast.error("Failed to search users");
-        }
+        // Search is handled in real-time by the useEffect hook above
     };
 
     const sendRequest = async (receiverId) => {
