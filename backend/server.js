@@ -22,7 +22,10 @@ const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: '*' } });
 
 // Middleware
-app.use(cors());
+app.use(cors({
+    origin: ['http://localhost:5173', 'https://snoplol.netlify.app'], // Add your Netlify URL here
+    credentials: true
+}));
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
@@ -33,7 +36,7 @@ app.use('/api/posts', postRoutes);
 app.use('/api/messages', messageRoutes);
 
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', message: 'Lumina API is running' });
+    res.json({ status: 'ok', message: 'Lumina API is running' });
 });
 
 // Setup Port
@@ -49,7 +52,7 @@ io.on('connection', (socket) => {
         try {
             const msg = await Message.create({ sender: senderId, receiver: receiverId, content });
             socket.in(receiverId).emit('receiveMessage', msg);
-            if(callback) callback(msg);
+            if (callback) callback(msg);
         } catch (err) { }
     });
 
@@ -75,14 +78,14 @@ io.on('connection', (socket) => {
 
 // Connect to MongoDB
 const connectDB = async () => {
-  try {
-    await mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/lumina');
-    console.log('MongoDB connection SUCCESS');
-    server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-  } catch (error) {
-    console.error('MongoDB connection FAIL', error);
-    process.exit(1);
-  }
+    try {
+        await mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/lumina');
+        console.log('MongoDB connection SUCCESS');
+        server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+    } catch (error) {
+        console.error('MongoDB connection FAIL', error);
+        process.exit(1);
+    }
 };
 
 connectDB();
