@@ -33,7 +33,7 @@ const MessagesList = () => {
                         <Link to={`/chat/${f._id}`} key={f._id} className="bg-brand-dark/80 p-5 rounded-2xl border border-brand-light/20 flex items-center justify-between hover:border-primary-500 hover:shadow-[0_0_15px_rgba(253,128,46,0.2)] transition-all block group">
                             <div className="flex items-center gap-4">
                                 <div className="w-14 h-14 rounded-full bg-primary-500 flex items-center justify-center font-bold text-white text-xl overflow-hidden shadow-inner ring-2 ring-primary-500/20">
-                                    {f.avatar ? <img src={`http://localhost:5000${f.avatar}`} className="w-full h-full object-cover"/> : f.name[0].toUpperCase()}
+                                    {f.avatar ? <img src={`${import.meta.env.VITE_API_URL || import.meta.env.VITE_API_URL || 'http://localhost:5000'}${f.avatar}`} className="w-full h-full object-cover"/> : f.name[0].toUpperCase()}
                                 </div>
                                 <div>
                                     <h3 className="font-bold text-lg text-white group-hover:text-primary-400 transition-colors">{f.name}</h3>

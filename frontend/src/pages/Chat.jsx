@@ -7,7 +7,7 @@ import CryptoJS from 'crypto-js';
 import { Send, Lock, ArrowLeft, Key, User, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-const ENDPOINT = "http://localhost:5000";
+const ENDPOINT = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_URL || 'http://localhost:5000';
 let socket;
 
 const Chat = () => {
@@ -105,7 +105,7 @@ const Chat = () => {
                     </button>
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-fuchsia-500 flex items-center justify-center font-bold text-white shadow-inner">
-                            {friend?.avatar ? <img src={`http://localhost:5000${friend.avatar}`} className="w-full h-full object-cover rounded-full"/> : friend?.name?.[0]?.toUpperCase()}
+                            {friend?.avatar ? <img src={`${import.meta.env.VITE_API_URL || import.meta.env.VITE_API_URL || 'http://localhost:5000'}${friend.avatar}`} className="w-full h-full object-cover rounded-full"/> : friend?.name?.[0]?.toUpperCase()}
                         </div>
                         <div>
                             <h3 className="font-bold text-white">{friend?.name || "Loading..."}</h3>

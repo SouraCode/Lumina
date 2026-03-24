@@ -15,7 +15,7 @@ const Profile = () => {
     const [bio, setBio] = useState(user?.bio || '');
     const [isPrivate, setIsPrivate] = useState(user?.isPrivate || false);
     const [avatarFile, setAvatarFile] = useState(null);
-    const [avatarPreview, setAvatarPreview] = useState(user?.avatar ? `http://localhost:5000${user.avatar}` : null);
+    const [avatarPreview, setAvatarPreview] = useState(user?.avatar ? `${import.meta.env.VITE_API_URL || import.meta.env.VITE_API_URL || 'http://localhost:5000'}${user.avatar}` : null);
     const [updating, setUpdating] = useState(false);
     const fileRef = useRef(null);
 
@@ -70,7 +70,7 @@ const Profile = () => {
             <div className="bg-neutral-900 border border-neutral-800 rounded-3xl p-8 flex flex-col md:flex-row items-center gap-8 shadow-xl mb-12 relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-primary-500/10 blur-3xl rounded-full translate-x-1/2 -translate-y-1/2" />
                 <div className="w-32 h-32 rounded-full ring-4 ring-neutral-800 bg-gradient-to-br from-primary-600 to-fuchsia-600 flex items-center justify-center shadow-2xl relative z-10 text-white font-extrabold text-4xl overflow-hidden">
-                    {user?.avatar ? <img src={`http://localhost:5000${user.avatar}`} alt="Avatar" className="w-full h-full object-cover"/> : user?.name?.[0].toUpperCase()}
+                    {user?.avatar ? <img src={`${import.meta.env.VITE_API_URL || import.meta.env.VITE_API_URL || 'http://localhost:5000'}${user.avatar}`} alt="Avatar" className="w-full h-full object-cover"/> : user?.name?.[0].toUpperCase()}
                     {user?.isPrivate && <div className="absolute top-2 right-2 bg-black/60 p-1.5 rounded-full"><Lock size={14} className="text-white"/></div>}
                 </div>
                 <div className="text-center md:text-left relative z-10 flex-1">

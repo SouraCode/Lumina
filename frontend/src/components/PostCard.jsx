@@ -46,7 +46,7 @@ const PostCard = ({ post }) => {
             {/* Header */}
             <div className="p-4 flex items-center space-x-3">
                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-fuchsia-500 flex items-center justify-center font-bold text-white overflow-hidden shadow-inner ring-2 ring-primary-500/20">
-                    {post.user.avatar ? <img src={`http://localhost:5000${post.user.avatar}`} alt="Avatar" className="w-full h-full object-cover" /> : post.user.name?.[0].toUpperCase()}
+                    {post.user.avatar ? <img src={`${import.meta.env.VITE_API_URL || import.meta.env.VITE_API_URL || 'http://localhost:5000'}${post.user.avatar}`} alt="Avatar" className="w-full h-full object-cover" /> : post.user.name?.[0].toUpperCase()}
                 </div>
                 <div>
                     <h4 className="font-semibold text-white tracking-wide">{post.user.name}</h4>
@@ -65,9 +65,9 @@ const PostCard = ({ post }) => {
                 ) : null}
                 
                 {post.mediaType === 'video' ? (
-                   <video src={`http://localhost:5000${post.mediaUrl}`} controls className={`w-full h-full max-h-96 object-contain transition-all duration-700 ${isLocked ? 'blur-3xl opacity-20 saturate-0 select-none' : ''}`}></video>
+                   <video src={`${import.meta.env.VITE_API_URL || import.meta.env.VITE_API_URL || 'http://localhost:5000'}${post.mediaUrl}`} controls className={`w-full h-full max-h-96 object-contain transition-all duration-700 ${isLocked ? 'blur-3xl opacity-20 saturate-0 select-none' : ''}`}></video>
                 ) : (
-                   <img src={`http://localhost:5000${post.mediaUrl}`} className={`w-full h-full max-h-96 object-cover transition-all duration-700 ${isLocked ? 'blur-3xl opacity-20 saturate-0 select-none pointer-events-none' : ''}`} alt="Post Media" />
+                   <img src={`${import.meta.env.VITE_API_URL || import.meta.env.VITE_API_URL || 'http://localhost:5000'}${post.mediaUrl}`} className={`w-full h-full max-h-96 object-cover transition-all duration-700 ${isLocked ? 'blur-3xl opacity-20 saturate-0 select-none pointer-events-none' : ''}`} alt="Post Media" />
                 )}
             </div>
 
@@ -99,7 +99,7 @@ const PostCard = ({ post }) => {
                                 comments.map((c, i) => (
                                     <div key={i} className="flex gap-2">
                                         <div className="w-6 h-6 rounded-full bg-primary-900 mt-1 flex-shrink-0 flex items-center justify-center overflow-hidden">
-                                             {c.user?.avatar ? <img src={`http://localhost:5000${c.user.avatar}`} className="w-full h-full object-cover"/> : <User size={12} className="text-primary-300"/>}
+                                             {c.user?.avatar ? <img src={`${import.meta.env.VITE_API_URL || import.meta.env.VITE_API_URL || 'http://localhost:5000'}${c.user.avatar}`} className="w-full h-full object-cover"/> : <User size={12} className="text-primary-300"/>}
                                         </div>
                                         <div className="bg-brand-dark rounded-xl px-3 py-2 flex-1 border border-brand-light/10">
                                             <p className="text-xs font-bold text-primary-300 mb-0.5">{c.user?.name || "Unknown"}</p>

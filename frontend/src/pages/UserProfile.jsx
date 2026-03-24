@@ -54,7 +54,7 @@ const UserProfile = () => {
                 <div className="bg-neutral-900 border border-neutral-800 rounded-3xl p-8 flex flex-col items-center gap-6 shadow-xl mb-12 relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-64 h-64 bg-primary-500/10 blur-3xl rounded-full translate-x-1/2 -translate-y-1/2" />
                     <div className="w-32 h-32 rounded-full ring-4 ring-neutral-800 bg-gradient-to-br from-primary-600 to-fuchsia-600 flex items-center justify-center shadow-2xl relative z-10 text-white font-extrabold text-4xl overflow-hidden">
-                        {targetUser.avatar ? <img src={`http://localhost:5000${targetUser.avatar}`} alt="Avatar" className="w-full h-full object-cover"/> : targetUser.name[0].toUpperCase()}
+                        {targetUser.avatar ? <img src={`${import.meta.env.VITE_API_URL || import.meta.env.VITE_API_URL || 'http://localhost:5000'}${targetUser.avatar}`} alt="Avatar" className="w-full h-full object-cover"/> : targetUser.name[0].toUpperCase()}
                     </div>
                     <div className="text-center relative z-10">
                         <h2 className="text-3xl font-bold text-white mb-2 tracking-wide flex items-center justify-center gap-2">

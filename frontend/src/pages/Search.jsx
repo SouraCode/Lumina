@@ -83,7 +83,7 @@ const Search = () => {
                             <Link to={`/user/${u._id}`} key={u._id} className="bg-neutral-900 p-4 rounded-2xl border border-neutral-800 flex items-center justify-between hover:border-neutral-700 transition-colors block">
                                 <div className="flex items-center gap-3">
                                     <div className="w-12 h-12 bg-gradient-to-br from-primary-500 to-fuchsia-500 rounded-full flex items-center justify-center font-bold text-white overflow-hidden">
-                                        {u.avatar ? <img src={`http://localhost:5000${u.avatar}`} className="w-full h-full object-cover" /> : u.name[0].toUpperCase()}
+                                        {u.avatar ? <img src={`${import.meta.env.VITE_API_URL || import.meta.env.VITE_API_URL || 'http://localhost:5000'}${u.avatar}`} className="w-full h-full object-cover" /> : u.name[0].toUpperCase()}
                                     </div>
                                     <div>
                                         <p className="font-bold">{u.name}</p>
@@ -131,7 +131,7 @@ const Search = () => {
                             <div key={f._id} className="p-4 bg-neutral-900 border border-neutral-800 rounded-2xl text-sm font-medium text-white flex items-center justify-between shadow-sm">
                                 <div className="flex items-center gap-3">
                                     <div className="w-10 h-10 rounded-full bg-primary-500 flex items-center justify-center font-bold overflow-hidden shadow-inner">
-                                        {f.avatar ? <img src={`http://localhost:5000${f.avatar}`} className="w-full h-full object-cover"/> : f.name[0].toUpperCase()}
+                                        {f.avatar ? <img src={`${import.meta.env.VITE_API_URL || import.meta.env.VITE_API_URL || 'http://localhost:5000'}${f.avatar}`} className="w-full h-full object-cover"/> : f.name[0].toUpperCase()}
                                     </div>
                                     <span className="text-base tracking-wide">{f.name}</span>
                                 </div>
