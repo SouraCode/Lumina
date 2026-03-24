@@ -22,10 +22,7 @@ const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: '*' } });
 
 // Middleware
-app.use(cors({
-    origin: ['http://localhost:5173', 'https://snoplol.netlify.app'], // Add your Netlify URL here
-    credentials: true
-}));
+app.use(cors());
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
