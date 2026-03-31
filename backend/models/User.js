@@ -8,7 +8,8 @@ const userSchema = new mongoose.Schema({
   bio: { type: String, default: 'Living life one post at a time! ✨' },
   isPrivate: { type: Boolean, default: false },
   followers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
-  following: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }]
+  following: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+  savedPosts: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Post' }]
 }, { timestamps: true });
 
 export default mongoose.model('User', userSchema);

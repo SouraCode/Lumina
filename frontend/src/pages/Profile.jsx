@@ -10,7 +10,7 @@ const Profile = () => {
     const { user, setUser } = useAuth();
     const navigate = useNavigate();
     const [posts, setPosts] = useState([]);
-    const [friendsData, setFriendsData] = useState({ friends: [], followers: [], following: [] });
+    const [friendsData, setFriendsData] = useState({ followers: [], following: [] });
     const [activeTab, setActiveTab] = useState('posts');
     const [loading, setLoading] = useState(true);
     const [isEditing, setIsEditing] = useState(false);
@@ -27,15 +27,13 @@ const Profile = () => {
         const fetchProfileData = async () => {
             if(!user) return;
             try {
-                const [postsRes, friendsRes, followersRes, followingRes] = await Promise.all([
+                const [postsRes, followersRes, followingRes] = await Promise.all([
                     api.get(`/posts/user/${user._id}`),
-                    api.get('/users/friends'),
                     api.get('/users/followers'),
                     api.get('/users/following')
                 ]);
                 setPosts(postsRes.data);
                 setFriendsData({
-                    friends: friendsRes.data,
                     followers: followersRes.data,
                     following: followingRes.data
                 });
@@ -155,7 +153,7 @@ const Profile = () => {
 
             {/* Tabs Navigation */}
             <div className="flex overflow-x-auto border-b border-neutral-800 mb-6 space-x-2 md:space-x-4 hide-scrollbar pb-2">
-                {['posts', 'friends', 'followers', 'following'].map(tab => (
+                {['posts', 'followers', 'following'].map(tab => (
                     <button key={tab} onClick={() => setActiveTab(tab)} className={`px-4 py-2 whitespace-nowrap rounded-xl transition-all font-semibold ${activeTab === tab ? 'bg-primary-600 text-white shadow-md' : 'text-neutral-500 hover:text-white hover:bg-neutral-800'}`}>
                         {tab.charAt(0).toUpperCase() + tab.slice(1)} ({tab === 'posts' ? posts.length : friendsData[tab].length})
                     </button>
@@ -163,16 +161,32 @@ const Profile = () => {
             </div>
 
             {/* Tab Contents */}
-            <div className="max-w-xl mx-auto">
+            <div className="max-w-3xl mx-auto w-full">
                 {activeTab === 'posts' && (
                     posts.length === 0 ? (
                         <p className="text-center text-neutral-500 mt-10">You haven't posted anything yet.</p>
                     ) : (
-                        posts.map(post => <PostCard key={post._id} post={post} />)
+                        <div className="grid grid-cols-3 gap-1 md:gap-2 w-full">
+                            {posts.map(post => (
+                                <div key={post._id} className="relative aspect-square bg-neutral-900 border border-neutral-900 overflow-hidden cursor-pointer group">
+                                    {post.mediaType === 'video' ? (
+                                        <video src={`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${post.mediaUrl}`} className="w-full h-full object-cover" muted />
+                                    ) : (
+                                        <img src={`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${post.mediaUrl}`} className="w-full h-full object-cover" alt="Post" />
+                                    )}
+                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity hidden md:flex items-center justify-center pointer-events-none">
+                                        <div className="flex gap-4 font-bold text-white text-sm">
+                                            <span>♥ {post.likes?.length || 0}</span>
+                                            <span>💬 {post.comments?.length || 0}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
                     )
                 )}
                 
-                {['friends', 'followers', 'following'].includes(activeTab) && (
+                {['followers', 'following'].includes(activeTab) && (
                     <div className="space-y-4">
                         {friendsData[activeTab].length === 0 ? (
                             <p className="text-center text-neutral-500 mt-10">No users found.</p>

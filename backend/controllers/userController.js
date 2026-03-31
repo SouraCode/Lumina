@@ -77,6 +77,23 @@ export const getFriends = async (req, res) => {
     }
 }
 
+export const getChatContacts = async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id)
+            .populate('followers', 'name avatar bio isPrivate')
+            .populate('following', 'name avatar bio isPrivate');
+            
+        const combined = [...user.followers, ...user.following];
+        
+        // Filter unique by _id
+        const uniqueContacts = Array.from(new Map(combined.map(item => [item._id.toString(), item])).values());
+        
+        res.json(uniqueContacts);
+    } catch(err) {
+        res.status(500).json({ message: err.message });
+    }
+}
+
 export const updateProfile = async (req, res) => {
     try {
         const user = await User.findById(req.user._id);

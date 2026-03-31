@@ -4,12 +4,12 @@ import api from '../lib/api';
 import { MessageSquare, Loader2 } from 'lucide-react';
 
 const MessagesList = () => {
-    const [friends, setFriends] = useState([]);
+    const [contacts, setContacts] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        api.get('/users/friends')
-           .then(({ data }) => setFriends(data))
+        api.get('/users/chat-contacts')
+           .then(({ data }) => setContacts(data))
            .finally(() => setLoading(false));
     }, []);
 
@@ -22,14 +22,14 @@ const MessagesList = () => {
                 Messages
             </h2>
             
-            {friends.length === 0 ? (
-                <div className="text-center py-12 bg-brand-dark/50 rounded-3xl border border-brand-light/30 shadow-lg">
-                    <p className="text-neutral-400 mb-4">You don't have any friends to chat with yet.</p>
-                    <Link to="/search" className="text-primary-500 font-bold hover:underline">Find Friends</Link>
+            {contacts.length === 0 ? (
+                <div className="text-center py-12 bg-neutral-900 rounded-3xl border border-neutral-800 shadow-lg mt-10">
+                    <p className="text-neutral-400 mb-4">Follow users to chat with them!</p>
+                    <Link to="/search" className="text-primary-500 font-bold hover:underline">Find People</Link>
                 </div>
             ) : (
                 <div className="space-y-4">
-                    {friends.map(f => (
+                    {contacts.map(f => (
                         <Link to={`/chat/${f._id}`} key={f._id} className="bg-brand-dark/80 p-5 rounded-2xl border border-brand-light/20 flex items-center justify-between hover:border-primary-500 hover:shadow-[0_0_15px_rgba(253,128,46,0.2)] transition-all block group">
                             <div className="flex items-center gap-4">
                                 <div className="w-14 h-14 rounded-full bg-primary-500 flex items-center justify-center font-bold text-white text-xl overflow-hidden shadow-inner ring-2 ring-primary-500/20">

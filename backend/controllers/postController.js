@@ -32,24 +32,45 @@ export const createPost = async (req, res) => {
 export const getFeed = async (req, res) => {
     try {
         const user = await User.findById(req.user._id);
-        const friends = user.friends;
+        const following = user.following || [];
         
-        const visibleUsers = await User.find({
-            $or: [
-                { isPrivate: false },
-                { isPrivate: { $exists: false } },
-                { _id: { $in: friends } },
-                { _id: req.user._id }
-            ]
-        }).select('_id');
+        // Feed algorithm: 
+        // 1. Posts from users you follow
+        // 2. Your own posts
+        // 3. Recommended/Explore: recent posts from public accounts to fill the feed
         
-        const visibleUserIds = visibleUsers.map(u => u._id);
-
-        const posts = await Post.find({ user: { $in: visibleUserIds } })
+        // First get posts from following and self
+        const primaryUserIds = [...following, req.user._id];
+        
+        const mainPosts = await Post.find({ user: { $in: primaryUserIds } })
             .populate('user', 'name avatar')
             .populate('comments.user', 'name avatar')
-            .sort({ createdAt: -1 });
-        res.json(posts);
+            .sort({ createdAt: -1 })
+            .limit(20);
+
+        // If main feed is too sparse, fetch public popular posts
+        let recommendedPosts = [];
+        if (mainPosts.length < 15) {
+            recommendedPosts = await Post.find({ 
+                user: { $nin: primaryUserIds }
+            })
+            .populate({
+                path: 'user',
+                match: { isPrivate: { $ne: true } },
+                select: 'name avatar'
+            })
+            .populate('comments.user', 'name avatar')
+            .sort({ createdAt: -1 })
+            .limit(10);
+            
+            // Filter out posts where user is null (due to population match failure on private accounts)
+            recommendedPosts = recommendedPosts.filter(p => p.user !== null);
+        }
+
+        // Combine and sort by date for a natural timeline
+        const allPosts = [...mainPosts, ...recommendedPosts].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        
+        res.json(allPosts);
     } catch(err) {
         res.status(500).json({ message: err.message });
     }
@@ -61,8 +82,8 @@ export const getUserPosts = async (req, res) => {
         if(!targetUser) return res.status(404).json({ message: "User not found" });
 
         if (targetUser.isPrivate && req.user._id.toString() !== targetUser._id.toString()) {
-            if (!targetUser.friends.includes(req.user._id)) {
-                return res.status(403).json({ message: "This account is private." });
+            if (!targetUser.followers.includes(req.user._id)) {
+                return res.status(403).json({ message: "This account is private and you are not following them." });
             }
         }
 
@@ -110,6 +131,23 @@ export const likePost = async (req, res) => {
         }
         await post.save();
         res.json(post);
+    } catch(err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
+export const deletePost = async (req, res) => {
+    try {
+        const post = await Post.findById(req.params.id);
+        if(!post) return res.status(404).json({ message: "Post not found" });
+
+        // Ensure only the creator can delete their post
+        if(post.user.toString() !== req.user._id.toString()) {
+            return res.status(403).json({ message: "You are not authorized to delete this post." });
+        }
+
+        await Post.findByIdAndDelete(req.params.id);
+        res.json({ message: "Post deleted successfully" });
     } catch(err) {
         res.status(500).json({ message: err.message });
     }

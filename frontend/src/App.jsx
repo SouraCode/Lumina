@@ -10,6 +10,7 @@ import CreatePost from './pages/CreatePost';
 import Profile from './pages/Profile';
 import UserProfile from './pages/UserProfile';
 import Search from './pages/Search';
+import Explore from './pages/Explore';
 import Chat from './pages/Chat';
 import MessagesList from './pages/MessagesList';
 import { Toaster } from 'react-hot-toast';
@@ -38,6 +39,7 @@ const AnimatedRoutes = () => {
         <Route path="/profile" element={<ProtectedRoute><PageWrapper><Profile /></PageWrapper></ProtectedRoute>} />
         <Route path="/user/:id" element={<ProtectedRoute><PageWrapper><UserProfile /></PageWrapper></ProtectedRoute>} />
         <Route path="/search" element={<ProtectedRoute><PageWrapper><Search /></PageWrapper></ProtectedRoute>} />
+        <Route path="/explore" element={<ProtectedRoute><PageWrapper><Explore /></PageWrapper></ProtectedRoute>} />
         <Route path="/messages" element={<ProtectedRoute><PageWrapper><MessagesList /></PageWrapper></ProtectedRoute>} />
         <Route path="/chat/:id" element={<ProtectedRoute><PageWrapper><Chat /></PageWrapper></ProtectedRoute>} />
       </Routes>
@@ -52,8 +54,11 @@ function App() {
         <div className="min-h-screen bg-neutral-950 text-white selection:bg-primary-500/30 font-inter">
           <Navbar />
 
-          <main className="max-w-5xl mx-auto pt-24 px-4 pb-12">
-            <AnimatedRoutes />
+          {/* main container shifted right for desktop sidebar and padded for mobile top/bottom bars */}
+          <main className="md:ml-64 pt-16 pb-20 md:pt-8 md:pb-8 px-4 flex justify-center min-h-screen">
+            <div className="w-full max-w-2xl">
+              <AnimatedRoutes />
+            </div>
           </main>
           <Toaster position="bottom-center" toastOptions={{ style: { background: '#111', color: '#fff', border: '1px solid #333' } }} />
         </div>
