@@ -1,13 +1,17 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useNavigate, Link } from 'react-router-dom';
 import api from '../lib/api';
 import PostCard from '../components/PostCard';
-import { Loader2, Edit3, Camera, X, Lock, Globe, Save } from 'lucide-react';
+import { Loader2, Edit3, Camera, X, Lock, Globe, LogOut } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const Profile = () => {
     const { user, setUser } = useAuth();
+    const navigate = useNavigate();
     const [posts, setPosts] = useState([]);
+    const [friendsData, setFriendsData] = useState({ friends: [], followers: [], following: [] });
+    const [activeTab, setActiveTab] = useState('posts');
     const [loading, setLoading] = useState(true);
     const [isEditing, setIsEditing] = useState(false);
 
@@ -20,17 +24,33 @@ const Profile = () => {
     const fileRef = useRef(null);
 
     useEffect(() => {
-        const fetchPosts = async () => {
+        const fetchProfileData = async () => {
             if(!user) return;
             try {
-                const { data } = await api.get(`/posts/user/${user._id}`);
-                setPosts(data);
+                const [postsRes, friendsRes, followersRes, followingRes] = await Promise.all([
+                    api.get(`/posts/user/${user._id}`),
+                    api.get('/users/friends'),
+                    api.get('/users/followers'),
+                    api.get('/users/following')
+                ]);
+                setPosts(postsRes.data);
+                setFriendsData({
+                    friends: friendsRes.data,
+                    followers: followersRes.data,
+                    following: followingRes.data
+                });
             } catch(err) {} finally {
                 setLoading(false);
             }
         };
-        fetchPosts();
+        fetchProfileData();
     }, [user]);
+
+    const handleLogout = () => {
+        localStorage.removeItem('userInfo');
+        setUser(null);
+        navigate('/login', { replace: true });
+    };
 
     const handleFileChange = (e) => {
         if(e.target.files[0]) {
@@ -78,16 +98,15 @@ const Profile = () => {
                        {user?.name} {user?.isPrivate ? <Lock size={18} className="text-neutral-500"/> : <Globe size={18} className="text-primary-500"/>}
                     </h2>
                     <p className="text-neutral-400 mb-6 max-w-md">{user?.bio || 'Living life one post at a time! ✨'}</p>
-                    <div className="flex justify-center md:justify-start gap-4">
-                        <div className="text-center bg-black/40 px-4 py-2 rounded-xl">
-                            <h4 className="font-bold text-white text-lg">{posts.length}</h4>
-                            <p className="text-xs text-neutral-500 uppercase tracking-wider">Posts</p>
-                        </div>
-                    </div>
                 </div>
-                <button onClick={() => setIsEditing(true)} className="md:ml-auto p-3 bg-neutral-800 hover:bg-primary-600 rounded-2xl text-white transition-colors flex items-center justify-center gap-2 cursor-pointer border border-neutral-700 hover:border-transparent font-medium shadow-md">
-                    <Edit3 size={18} /> Edit Profile
-                </button>
+                <div className="md:ml-auto flex flex-col gap-3 w-full md:w-auto mt-6 md:mt-0">
+                    <button onClick={() => setIsEditing(true)} className="p-3 bg-neutral-800 hover:bg-primary-600 rounded-2xl text-white transition-colors flex items-center justify-center gap-2 cursor-pointer border border-neutral-700 hover:border-transparent font-medium shadow-md">
+                        <Edit3 size={18} /> Edit Profile
+                    </button>
+                    <button onClick={handleLogout} className="p-3 bg-red-900/30 hover:bg-red-600 rounded-2xl text-red-500 hover:text-white transition-colors flex items-center justify-center gap-2 cursor-pointer border border-red-900/50 hover:border-transparent font-medium shadow-md">
+                        <LogOut size={18} /> Logout
+                    </button>
+                </div>
             </div>
 
             {isEditing && (
@@ -134,12 +153,44 @@ const Profile = () => {
                 </div>
             )}
 
-            <h3 className="text-xl font-bold mb-6 text-white border-b border-neutral-800 pb-4">My Posts</h3>
+            {/* Tabs Navigation */}
+            <div className="flex overflow-x-auto border-b border-neutral-800 mb-6 space-x-2 md:space-x-4 hide-scrollbar pb-2">
+                {['posts', 'friends', 'followers', 'following'].map(tab => (
+                    <button key={tab} onClick={() => setActiveTab(tab)} className={`px-4 py-2 whitespace-nowrap rounded-xl transition-all font-semibold ${activeTab === tab ? 'bg-primary-600 text-white shadow-md' : 'text-neutral-500 hover:text-white hover:bg-neutral-800'}`}>
+                        {tab.charAt(0).toUpperCase() + tab.slice(1)} ({tab === 'posts' ? posts.length : friendsData[tab].length})
+                    </button>
+                ))}
+            </div>
+
+            {/* Tab Contents */}
             <div className="max-w-xl mx-auto">
-                {posts.length === 0 ? (
-                    <p className="text-center text-neutral-500 mt-10">You haven't posted anything yet.</p>
-                ) : (
-                    posts.map(post => <PostCard key={post._id} post={post} />)
+                {activeTab === 'posts' && (
+                    posts.length === 0 ? (
+                        <p className="text-center text-neutral-500 mt-10">You haven't posted anything yet.</p>
+                    ) : (
+                        posts.map(post => <PostCard key={post._id} post={post} />)
+                    )
+                )}
+                
+                {['friends', 'followers', 'following'].includes(activeTab) && (
+                    <div className="space-y-4">
+                        {friendsData[activeTab].length === 0 ? (
+                            <p className="text-center text-neutral-500 mt-10">No users found.</p>
+                        ) : (
+                            friendsData[activeTab].map(u => (
+                                <Link to={`/user/${u._id}`} key={u._id} className="bg-neutral-900 p-4 rounded-2xl border border-neutral-800 flex items-center justify-between hover:border-neutral-700 transition-colors block">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-12 h-12 bg-gradient-to-br from-primary-500 to-fuchsia-500 rounded-full flex items-center justify-center font-bold text-white overflow-hidden">
+                                            {u.avatar ? <img src={`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${u.avatar}`} className="w-full h-full object-cover" /> : u.name[0].toUpperCase()}
+                                        </div>
+                                        <div>
+                                            <p className="font-bold text-white">{u.name}</p>
+                                        </div>
+                                    </div>
+                                </Link>
+                            ))
+                        )}
+                    </div>
                 )}
             </div>
         </div>

@@ -56,10 +56,14 @@ io.on('connection', (socket) => {
         } catch (err) { }
     });
 
-    socket.on('deleteMessage', async ({ messageId, receiverId }) => {
+    socket.on('deleteMessage', async ({ messageId, receiverId, type, userId }) => {
         try {
-            await Message.findByIdAndDelete(messageId);
-            socket.in(receiverId).emit('messageDeleted', messageId);
+            if (type === 'for_me') {
+                await Message.findByIdAndUpdate(messageId, { $addToSet: { deletedBy: userId } });
+            } else if (type === 'for_everyone') {
+                await Message.findByIdAndUpdate(messageId, { isDeletedForEveryone: true });
+                socket.in(receiverId).emit('messageDeletedEveryone', messageId);
+            }
         } catch (err) { }
     });
 
@@ -89,4 +93,15 @@ const connectDB = async () => {
 };
 
 connectDB();
-// Restart trigger
+
+const shutdown = () => {
+    console.log('Shutting down server gracefully...');
+    server.close(() => {
+        mongoose.connection.close(false, () => {
+            process.exit(0);
+        });
+    });
+};
+
+process.on('SIGINT', shutdown);
+process.on('SIGTERM', shutdown);

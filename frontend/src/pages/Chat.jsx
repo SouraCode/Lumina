@@ -37,8 +37,8 @@ const Chat = () => {
             }
         });
 
-        socket.on('messageDeleted', (msgId) => {
-            setMessages(prev => prev.filter(m => m._id !== msgId));
+        socket.on('messageDeletedEveryone', (msgId) => {
+            setMessages(prev => prev.map(m => m._id === msgId ? { ...m, isDeletedForEveryone: true } : m));
         });
 
         socket.on('chatCleared', ({ senderId }) => {
@@ -90,9 +90,13 @@ const Chat = () => {
         toast.success("Chat history cleared.");
     };
 
-    const handleDeleteMessage = (msgId) => {
-        socket.emit('deleteMessage', { messageId, receiverId: friendId });
-        setMessages(prev => prev.filter(m => m._id !== msgId));
+    const handleDeleteMessage = (msgId, type) => {
+        socket.emit('deleteMessage', { messageId: msgId, receiverId: friendId, type, userId: user._id });
+        if (type === 'for_me') {
+            setMessages(prev => prev.filter(m => m._id !== msgId));
+        } else {
+            setMessages(prev => prev.map(m => m._id === msgId ? { ...m, isDeletedForEveryone: true } : m));
+        }
     };
 
     return (
@@ -128,15 +132,16 @@ const Chat = () => {
                 )}
                 {messages.map((m, i) => {
                     const isMe = m.sender === user._id;
-                    const decryptedText = decryptMessage(m.content);
+                    const decryptedText = m.isDeletedForEveryone ? "🚫 This message was deleted" : decryptMessage(m.content);
                     return (
                         <div key={i} className={`flex ${isMe ? 'justify-end' : 'justify-start'} group max-w-full`}>
-                            {isMe && m._id && (
-                                <button onClick={() => handleDeleteMessage(m._id)} title="Delete message" className="mr-3 opacity-100 md:opacity-0 md:group-hover:opacity-100 text-neutral-500 hover:text-red-500 transition-all self-center">
-                                    <Trash2 size={16} />
-                                </button>
+                            {!m.isDeletedForEveryone && m._id && (
+                                <div className="flex flex-col gap-1 mr-3 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all self-center">
+                                    <button onClick={() => handleDeleteMessage(m._id, 'for_me')} title="Delete for me" className="text-neutral-500 hover:text-neutral-300 text-[10px] bg-neutral-800 px-2 py-1 rounded">For me</button>
+                                    {isMe && <button onClick={() => handleDeleteMessage(m._id, 'for_everyone')} title="Delete for everyone" className="text-red-500 hover:text-red-400 text-[10px] bg-red-950/30 px-2 py-1 rounded border border-red-900/50">Everyone</button>}
+                                </div>
                             )}
-                            <div className={`max-w-[75%] p-4 rounded-2xl shadow-md ${isMe ? 'bg-gradient-to-br from-primary-600 to-fuchsia-600 text-white rounded-tr-sm' : 'bg-brand-dark text-neutral-100 rounded-tl-sm border border-brand-light/30'}`}>
+                            <div className={`max-w-[75%] p-4 rounded-2xl shadow-md ${m.isDeletedForEveryone ? 'bg-neutral-800/50 text-neutral-500 italic border border-neutral-700/50' : isMe ? 'bg-gradient-to-br from-primary-600 to-fuchsia-600 text-white rounded-tr-sm' : 'bg-brand-dark text-neutral-100 rounded-tl-sm border border-brand-light/30'}`}>
                                 <p className="text-[15px] leading-relaxed break-words">{decryptedText}</p>
                             </div>
                         </div>

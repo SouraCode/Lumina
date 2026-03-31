@@ -10,17 +10,17 @@ const Search = () => {
     const navigate = useNavigate();
     const [keyword, setKeyword] = useState('');
     const [results, setResults] = useState([]);
-    const [pendingRequests, setPendingRequests] = useState([]);
+    const [following, setFollowing] = useState([]);
     const [friends, setFriends] = useState([]);
 
     const fetchFriendsData = async () => {
         try {
-            const [friendsRes, requestsRes] = await Promise.all([
+            const [friendsRes, followingRes] = await Promise.all([
                 api.get('/users/friends'),
-                api.get('/users/requests/pending')
+                api.get('/users/following')
             ]);
             setFriends(friendsRes.data);
-            setPendingRequests(requestsRes.data);
+            setFollowing(followingRes.data);
         } catch(err) { }
     };
 
@@ -49,25 +49,20 @@ const Search = () => {
         // Search is handled in real-time by the useEffect hook above
     };
 
-    const sendRequest = async (receiverId) => {
+    const toggleFollow = async (targetId, isFollowing) => {
         try {
-            await api.post('/users/requests/send', { receiverId });
-            toast.success("Friend request sent!");
-        } catch(err) {
-            toast.error(err.response?.data?.message || "Could not send request");
-        }
-    };
-
-    const respondRequest = async (requestId, status) => {
-        try {
-            await api.post('/users/requests/respond', { requestId, status });
-            toast.success(`Request ${status}!`);
+            if (isFollowing) {
+                await api.post('/users/unfollow', { targetId });
+                toast.success("Unfollowed user");
+            } else {
+                await api.post('/users/follow', { targetId });
+                toast.success("Followed user");
+            }
             fetchFriendsData();
         } catch(err) {
-            toast.error("Failed to respond");
+            toast.error(err.response?.data?.message || "Could not update follow status");
         }
     };
-
     return (
         <div className="max-w-3xl mx-auto py-8">
             <h2 className="text-3xl font-bold mb-8 text-white">Find Friends</h2>
@@ -87,55 +82,36 @@ const Search = () => {
                 {/* Search Results */}
                 <div>
                     <h3 className="text-xl font-bold mb-4 text-neutral-300">Results {results.length > 0 && `(${results.length})`}</h3>
-                    {results.length === 0 && <p className="text-neutral-500">No users found.</p>}
+                    {keyword.trim() === '' ? (
+                        <p className="text-neutral-500">Type a name or email to find users.</p>
+                    ) : results.length === 0 ? (
+                        <p className="text-neutral-500">No users found.</p>
+                    ) : null}
                     <div className="space-y-4">
-                        {results.map(u => (
+                        {results.map(u => {
+                            const isFollowing = following.some(f => f._id === u._id);
+                            return (
                             <Link to={`/user/${u._id}`} key={u._id} className="bg-neutral-900 p-4 rounded-2xl border border-neutral-800 flex items-center justify-between hover:border-neutral-700 transition-colors block">
                                 <div className="flex items-center gap-3">
                                     <div className="w-12 h-12 bg-gradient-to-br from-primary-500 to-fuchsia-500 rounded-full flex items-center justify-center font-bold text-white overflow-hidden">
-                                        {u.avatar ? <img src={`${import.meta.env.VITE_API_URL || import.meta.env.VITE_API_URL || 'http://localhost:5000'}${u.avatar}`} className="w-full h-full object-cover" /> : u.name[0].toUpperCase()}
+                                        {u.avatar ? <img src={`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${u.avatar}`} className="w-full h-full object-cover" /> : u.name[0].toUpperCase()}
                                     </div>
                                     <div>
                                         <p className="font-bold">{u.name}</p>
                                         <p className="text-xs text-neutral-500">{u.email}</p>
                                     </div>
                                 </div>
-                                <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); sendRequest(u._id); }} className="p-2 bg-primary-600 hover:bg-primary-500 rounded-xl text-white transition-colors">
-                                    <UserPlus size={20} />
+                                <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleFollow(u._id, isFollowing); }} className={`p-2 rounded-xl text-white transition-colors text-sm font-semibold px-4 ${isFollowing ? 'bg-neutral-700 hover:bg-neutral-600' : 'bg-primary-600 hover:bg-primary-500'}`}>
+                                    {isFollowing ? 'Following' : 'Follow'}
                                 </button>
                             </Link>
-                        ))}
+                        )})}
                     </div>
                 </div>
 
-                {/* Pending Requests */}
+                {/* Mutual Friends */}
                 <div>
-                    <h3 className="text-xl font-bold mb-4 text-neutral-300 flex items-center gap-2">
-                        <Clock className="text-orange-400"/> Pending Requests
-                    </h3>
-                    {pendingRequests.length === 0 && <p className="text-neutral-500">No pending requests.</p>}
-                    <div className="space-y-4">
-                        {pendingRequests.map(req => (
-                            <div key={req._id} className="bg-neutral-900 p-4 rounded-2xl border border-orange-900/30 flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-12 h-12 bg-neutral-800 rounded-full flex items-center justify-center font-bold text-white">
-                                        {req.sender.name[0].toUpperCase()}
-                                    </div>
-                                    <p className="font-bold">{req.sender.name}</p>
-                                </div>
-                                <div className="flex gap-2">
-                                    <button onClick={() => respondRequest(req._id, 'accepted')} className="p-2 bg-green-600/20 hover:bg-green-600/40 text-green-400 rounded-xl transition-colors">
-                                        <Check size={20} />
-                                    </button>
-                                    <button onClick={() => respondRequest(req._id, 'rejected')} className="p-2 bg-red-600/20 hover:bg-red-600/40 text-red-400 rounded-xl transition-colors">
-                                        <X size={20} />
-                                    </button>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-
-                    <h3 className="text-xl font-bold mb-4 mt-8 text-neutral-300">My Friends</h3>
+                    <h3 className="text-xl font-bold mb-4 text-neutral-300">My Friends (Mutual)</h3>
                     <div className="space-y-3">
                         {friends.map(f => (
                             <div key={f._id} className="p-4 bg-neutral-900 border border-neutral-800 rounded-2xl text-sm font-medium text-white flex items-center justify-between shadow-sm">

@@ -9,7 +9,8 @@ export const getMessages = async (req, res) => {
             $or: [
                 { sender: myId, receiver: friendId },
                 { sender: friendId, receiver: myId }
-            ]
+            ],
+            deletedBy: { $ne: myId }
         }).sort({ createdAt: 1 }); // Oldest first
 
         res.json(messages);

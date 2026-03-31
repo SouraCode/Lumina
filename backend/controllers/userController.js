@@ -1,11 +1,15 @@
 import User from '../models/User.js';
-import FriendRequest from '../models/FriendRequest.js';
 
 export const searchUsers = async (req, res) => {
     try {
-        const keyword = req.query.search ? {
-            name: { $regex: req.query.search, $options: 'i' }
-        } : {};
+        const searchQuery = req.query.search || req.query.keyword;
+        if (!searchQuery || searchQuery.trim() === '') {
+            return res.json([]);
+        }
+
+        const keyword = {
+            name: { $regex: searchQuery, $options: 'i' }
+        };
 
         const users = await User.find({ ...keyword, _id: { $ne: req.user._id } }).select('-password');
         res.json(users);
@@ -14,69 +18,47 @@ export const searchUsers = async (req, res) => {
     }
 };
 
-export const sendFriendRequest = async (req, res) => {
-  const { receiverId } = req.body;
-  if(req.user._id.toString() === receiverId) {
-    return res.status(400).json({ message: "You cannot send a request to yourself."});
+export const followUser = async (req, res) => {
+  const { targetId } = req.body;
+  if(req.user._id.toString() === targetId) {
+    return res.status(400).json({ message: "You cannot follow yourself."});
   }
   
   try {
-    // Check if friends already
-    const user = await User.findById(req.user._id);
-    if(user.friends.includes(receiverId)) {
-        return res.status(400).json({ message: "Already friends."});
-    }
+    const targetUser = await User.findByIdAndUpdate(targetId, { $addToSet: { followers: req.user._id } });
+    if (!targetUser) return res.status(404).json({ message: "User not found" });
 
-    const existingReq = await FriendRequest.findOne({
-      $or: [
-         { sender: req.user._id, receiver: receiverId, status: 'pending' },
-         { sender: receiverId, receiver: req.user._id, status: 'pending' }
-      ]
-    });
-    
-    if(existingReq) {
-      return res.status(400).json({ message: "Friend request already exists."});
-    }
-
-    const request = await FriendRequest.create({
-      sender: req.user._id,
-      receiver: receiverId
-    });
-    res.status(201).json(request);
+    await User.findByIdAndUpdate(req.user._id, { $addToSet: { following: targetId } });
+    res.status(200).json({ message: "Successfully followed user" });
   } catch(error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-export const respondUserRequest = async (req, res) => {
-  const { requestId, status } = req.body; // status: 'accepted' | 'rejected'
+export const unfollowUser = async (req, res) => {
+  const { targetId } = req.body;
   try {
-    const request = await FriendRequest.findById(requestId);
-    if(!request) return res.status(404).json({ message: "Request not found" });
-
-    if(request.receiver.toString() !== req.user._id.toString()) {
-        return res.status(401).json({ message: "Not authorized to respond to this request" });
-    }
-
-    request.status = status;
-    await request.save();
-
-    if(status === 'accepted') {
-        // Add to both users' friends array
-        await User.findByIdAndUpdate(request.sender, { $addToSet: { friends: request.receiver } });
-        await User.findByIdAndUpdate(request.receiver, { $addToSet: { friends: request.sender } });
-    }
-
-    res.json(request);
+    await User.findByIdAndUpdate(targetId, { $pull: { followers: req.user._id } });
+    await User.findByIdAndUpdate(req.user._id, { $pull: { following: targetId } });
+    res.status(200).json({ message: "Successfully unfollowed user" });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };
 
-export const getPendingRequests = async (req, res) => {
+export const getFollowers = async (req, res) => {
     try {
-        const requests = await FriendRequest.find({ receiver: req.user._id, status: 'pending' }).populate('sender', 'name avatar bio');
-        res.json(requests);
+        const user = await User.findById(req.user._id).populate('followers', 'name avatar bio isPrivate');
+        res.json(user.followers);
+    } catch(err) {
+        res.status(500).json({ message: err.message });
+    }
+}
+
+export const getFollowing = async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id).populate('following', 'name avatar bio isPrivate');
+        res.json(user.following);
     } catch(err) {
         res.status(500).json({ message: err.message });
     }
@@ -84,8 +66,12 @@ export const getPendingRequests = async (req, res) => {
 
 export const getFriends = async (req, res) => {
     try {
-        const user = await User.findById(req.user._id).populate('friends', 'name avatar bio isPrivate');
-        res.json(user.friends);
+        const user = await User.findById(req.user._id);
+        const mutualIds = user.followers.filter(followerId => 
+            user.following.includes(followerId)
+        );
+        const friends = await User.find({ _id: { $in: mutualIds } }).select('name avatar bio isPrivate');
+        res.json(friends);
     } catch(err) {
         res.status(500).json({ message: err.message });
     }
